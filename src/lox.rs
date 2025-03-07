@@ -1,5 +1,6 @@
 use std::process::exit;
 
+use crate::parser::Parser;
 use crate::{models::constants::ExitCode, scanner::Scanner};
 
 #[derive(Debug, Clone, Copy)]
@@ -35,8 +36,19 @@ impl Lox {
             exit(ExitCode::DataError as i32);
         }
 
-        for token in scanner.tokens {
+        for token in &scanner.tokens {
             println!("{}", token);
+        }
+
+        let mut parser = Parser::new(scanner.tokens);
+        parser.parse();
+
+        if !parser.errors.is_empty() {
+            println!("Errors:");
+            for error in parser.errors {
+                println!("{}", error);
+            }
+            exit(ExitCode::DataError as i32);
         }
     }
 }
