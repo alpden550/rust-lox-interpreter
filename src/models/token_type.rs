@@ -26,7 +26,7 @@ lazy_static! {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenType {
     // Single-character tokens.
     LeftParen,
