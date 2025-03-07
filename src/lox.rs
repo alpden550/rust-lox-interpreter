@@ -25,7 +25,7 @@ impl Lox {
 
     pub fn run(&self, source_code: &str) {
         let mut scanner = Scanner::new(source_code.to_string());
-        let tokens = scanner.scan_tokens();
+        scanner.scan_tokens();
 
         if !scanner.errors.is_empty() {
             println!("Errors:");
@@ -35,7 +35,7 @@ impl Lox {
             exit(ExitCode::DataError as i32);
         }
 
-        for token in tokens {
+        for token in scanner.tokens {
             println!("{}", token);
         }
     }
