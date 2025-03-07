@@ -1,5 +1,6 @@
 mod lox;
 mod models;
+mod parser;
 mod scanner;
 
 use lox::Lox;
