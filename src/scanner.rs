@@ -109,7 +109,9 @@ impl Scanner {
             c if c.is_ascii_digit() => self.number(),
             c if c.is_ascii_alphabetic() || c == '_' => self.identifier(),
 
-            _ => self.errors.push(format!("line {}: Unexpected character: {}", self.line, c)),
+            _ => self
+                .errors
+                .push(format!("line {}: Unexpected character: {}", self.line, c)),
         }
     }
 
@@ -130,7 +132,7 @@ impl Scanner {
 
     fn peek(&self) -> char {
         if self.is_at_end() {
-            return '\0'
+            return '\0';
         }
 
         self.chars[self.current]
@@ -138,7 +140,7 @@ impl Scanner {
 
     fn peek_next(&self) -> char {
         if self.current + 1 >= self.length {
-            return '\0'
+            return '\0';
         }
 
         self.chars[self.current + 1]
@@ -150,12 +152,8 @@ impl Scanner {
 
     fn add_token(&mut self, token_type: TokenType, literal: Literal) {
         let text = &self.source[self.start..self.current];
-        self.tokens.push(Token::new(
-            token_type,
-            text.to_string(),
-            literal,
-            self.line,
-        ));
+        self.tokens
+            .push(Token::new(token_type, text.to_string(), literal, self.line));
     }
 
     fn string(&mut self) {
@@ -167,7 +165,8 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            self.errors.push(format!("line {}: Unterminated string.", self.line));
+            self.errors
+                .push(format!("line {}: Unterminated string.", self.line));
             return;
         }
 
@@ -192,7 +191,8 @@ impl Scanner {
         if let Ok(num) = value.parse::<f64>() {
             self.add_token(TokenType::Number, Literal::Number(num));
         } else {
-            self.errors.push(format!("line {}: Invalid number: {}", self.line, value));
+            self.errors
+                .push(format!("line {}: Invalid number: {}", self.line, value));
         }
     }
 
