@@ -120,7 +120,7 @@ impl Scanner {
     }
 
     fn matches(&mut self, expected: char) -> bool {
-        if self.is_at_end() || self.chars[self.current] != expected {
+        if self.is_at_end() || self.peek() != expected {
             return false;
         }
 
