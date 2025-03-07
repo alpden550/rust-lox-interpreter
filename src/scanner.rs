@@ -96,7 +96,6 @@ impl Scanner {
             }
             '/' => {
                 if self.matches('/') {
-                    // Comment goes until end of line
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
