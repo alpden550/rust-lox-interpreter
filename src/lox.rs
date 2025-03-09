@@ -28,7 +28,7 @@ impl Lox {
         if !scanner.errors.is_empty() {
             println!("Errors:");
             for error in scanner.errors {
-                println!("{}", error);
+                eprintln!("{}", error);
             }
             exit(ExitCode::DataError as i32);
         }
@@ -39,7 +39,7 @@ impl Lox {
         if !parser.errors.is_empty() {
             println!("Errors:");
             for error in parser.errors {
-                println!("{}", error);
+                eprintln!("{}", error);
             }
             exit(ExitCode::DataError as i32);
         }
@@ -51,7 +51,7 @@ impl Lox {
         if !interpreter.errors.is_empty() {
             println!("Errors:");
             for error in interpreter.errors {
-                println!("{}", error);
+                eprintln!("{}", error);
             }
             exit(ExitCode::RuntimeError as i32);
         }
