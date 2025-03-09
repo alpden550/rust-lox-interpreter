@@ -5,7 +5,6 @@ use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
 
 pub struct Interpreter {
-    exprs: Vec<Expr>,
     pub errors: Vec<String>,
 }
 
@@ -126,21 +125,16 @@ impl ExprVisitor<Literal> for Interpreter {
 }
 
 impl Interpreter {
-    pub fn new(exprs: Vec<Expr>) -> Self {
-        Self {
-            exprs,
-            errors: Vec::new(),
-        }
+    pub fn new() -> Self {
+        Self { errors: Vec::new() }
     }
 
-    pub fn interpret(&mut self) {
-        for expr in &self.exprs {
-            match self.evaluate(expr) {
-                Ok(e) => {
-                    println!("{}", e);
-                }
-                Err(e) => self.errors.push(e.to_string()),
+    pub fn interpret(&mut self, expr: &Expr) {
+        match self.evaluate(expr) {
+            Ok(e) => {
+                println!("{}", e);
             }
+            Err(e) => self.errors.push(e.to_string()),
         }
     }
 
