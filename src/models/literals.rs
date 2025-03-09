@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
-#[allow(dead_code)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Nil,
     String(String),
