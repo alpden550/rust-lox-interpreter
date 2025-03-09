@@ -153,7 +153,7 @@ impl Interpreter {
             Literal::Nil => false,
             Literal::Boolean(b) => *b,
             Literal::Number(n) => *n != 0.0,
-            Literal::String(s) => *s != "",
+            Literal::String(s) => !s.is_empty(),
         }
     }
 }
