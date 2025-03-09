@@ -1,34 +1,15 @@
+use crate::errors::ParseError;
 use crate::models::exr::Expr;
 use crate::models::literals::Literal;
 use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
-use std::fmt;
-
-#[derive(Debug, Clone)]
-pub struct ParseError {
-    token: Token,
-    message: String,
-}
-
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.token.token_type == TokenType::Eof {
-            write!(f, "line {} at end: {}", self.token.line, self.message)
-        } else {
-            write!(
-                f,
-                "line {} at '{}': {}",
-                self.token.line, self.token.lexeme, self.message
-            )
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
     pub errors: Vec<String>,
+    pub exprs: Vec<Expr>,
 }
 
 impl Parser {
@@ -37,6 +18,7 @@ impl Parser {
             tokens,
             current: 0,
             errors: Vec::new(),
+            exprs: Vec::new(),
         }
     }
 
@@ -44,7 +26,7 @@ impl Parser {
         while !self.is_at_end() {
             match self.expression() {
                 Ok(expr) => {
-                    println!("{}", expr);
+                    self.exprs.push(expr);
                 }
                 Err(error) => {
                     self.errors.push(error.to_string());
