@@ -44,8 +44,10 @@ impl Lox {
             exit(ExitCode::DataError as i32);
         }
 
-        let mut interpreter = Interpreter::new(parser.exprs);
-        interpreter.interpret();
+        let mut interpreter = Interpreter::new();
+        for expr in parser.exprs {
+            interpreter.interpret(&expr);
+        }
         if !interpreter.errors.is_empty() {
             println!("Errors:");
             for error in interpreter.errors {
