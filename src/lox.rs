@@ -1,27 +1,24 @@
 use std::process::exit;
 
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::{models::constants::ExitCode, scanner::Scanner};
 
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
-pub struct Lox {
-    pub has_error: bool,
-}
+pub struct Lox {}
 
-#[allow(dead_code)]
 impl Lox {
     pub fn new() -> Self {
-        Self { has_error: false }
+        Self {}
     }
 
+    #[allow(dead_code)]
     fn error(&mut self, line: usize, message: &str) {
         self.report(line, "", message);
-        self.has_error = true;
     }
 
     fn report(&mut self, line: usize, location: &str, message: &str) {
-        println!("[line {}] Error: {}: {}", line, location, message);
+        eprintln!("[line {}] Error: {}: {}", line, location, message);
     }
 
     pub fn run(&self, source_code: &str) {
@@ -36,10 +33,6 @@ impl Lox {
             exit(ExitCode::DataError as i32);
         }
 
-        for token in &scanner.tokens {
-            println!("{}", token);
-        }
-
         let mut parser = Parser::new(scanner.tokens);
         parser.parse();
 
@@ -49,6 +42,16 @@ impl Lox {
                 println!("{}", error);
             }
             exit(ExitCode::DataError as i32);
+        }
+
+        let mut interpreter = Interpreter::new(parser.exprs);
+        interpreter.interpret();
+        if !interpreter.errors.is_empty() {
+            println!("Errors:");
+            for error in interpreter.errors {
+                println!("{}", error);
+            }
+            exit(ExitCode::RuntimeError as i32);
         }
     }
 }
