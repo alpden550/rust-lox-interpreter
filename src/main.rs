@@ -1,3 +1,5 @@
+mod errors;
+mod interpreter;
 mod lox;
 mod models;
 mod parser;
