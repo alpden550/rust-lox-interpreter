@@ -4,4 +4,5 @@ pub enum ExitCode {
     IncorrectCommand = 64,
     DataError = 65,
     NoInputFile = 66,
+    RuntimeError = 70,
 }
