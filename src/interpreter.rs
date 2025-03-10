@@ -1,3 +1,4 @@
+use crate::environment::Environment;
 use crate::errors::RuntimeError;
 use crate::models::exr::{Expr, ExprVisitor};
 use crate::models::literals::Literal;
@@ -5,8 +6,12 @@ use crate::models::stmt::{Stmt, StmtVisitor};
 use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 pub struct Interpreter {
     pub errors: Vec<String>,
+    env: Rc<RefCell<Environment>>,
 }
 
 impl ExprVisitor<Literal> for Interpreter {
@@ -127,6 +132,10 @@ impl ExprVisitor<Literal> for Interpreter {
             )),
         }
     }
+
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
+        self.env.borrow().get(token)
+    }
 }
 
 impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
@@ -140,11 +149,27 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
         println!("{}", value);
         Ok(())
     }
+
+    fn visit_var_stmt(
+        &mut self,
+        lexeme: String,
+        initializer: &Option<Expr>,
+    ) -> Result<(), RuntimeError> {
+        let value = initializer
+            .as_ref()
+            .map_or_else(|| Ok(Literal::Nil), |expr| self.evaluate(expr))?;
+
+        self.env.borrow_mut().define(lexeme, value);
+        Ok(())
+    }
 }
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self { errors: Vec::new() }
+        Self {
+            errors: Vec::new(),
+            env: Rc::new(RefCell::new(Environment::new())),
+        }
     }
 
     pub fn interpret(&mut self, stmts: &[Stmt]) {
