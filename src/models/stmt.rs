@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter, Result};
 pub enum Stmt {
     Expr(Expr),
     Print(Expr),
+    Var(String, Option<Expr>),
 }
 
 impl Display for Stmt {
@@ -12,6 +13,13 @@ impl Display for Stmt {
         match self {
             Stmt::Expr(e) => write!(f, "expr {}", e),
             Stmt::Print(e) => write!(f, "print {}", e),
+            Stmt::Var(token, expr) => {
+                if let Some(expr) = expr {
+                    write!(f, "var {} = {}", token, expr)
+                } else {
+                    write!(f, "var {}", token)
+                }
+            }
         }
     }
 }
@@ -26,6 +34,7 @@ impl Stmt {
         match self {
             Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
             Stmt::Print(expr) => visitor.visit_print_stmt(expr),
+            Stmt::Var(token, expr) => todo!(),
         }
     }
 }
