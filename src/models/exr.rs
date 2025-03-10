@@ -36,6 +36,7 @@ pub trait ExprVisitor<T> {
     ) -> Result<T, RuntimeError>;
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<T, RuntimeError>;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<T, RuntimeError>;
+    fn visit_variable_expr(&mut self, token: &Token) -> Result<T, RuntimeError>;
 }
 
 impl Expr {
@@ -45,7 +46,7 @@ impl Expr {
             Expr::Binary(left, operator, right) => visitor.visit_binary_expr(left, operator, right),
             Expr::Grouping(expression) => visitor.visit_grouping_expr(expression),
             Expr::Unary(operator, right) => visitor.visit_unary_expr(operator, right),
-            Expr::Variable(token) => todo!(),
+            Expr::Variable(token) => visitor.visit_variable_expr(token),
         }
     }
 }
