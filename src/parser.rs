@@ -241,10 +241,7 @@ impl Parser {
         let name = self.previous().clone();
         let mut initializer = None;
 
-        if {
-            let match_equal = self.match_any(&[TokenType::Equal]);
-            match_equal
-        } {
+        if self.match_any(&[TokenType::Equal]) {
             initializer = Some(self.expression()?);
         }
 
