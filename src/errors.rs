@@ -26,6 +26,7 @@ pub enum RuntimeError {
     TypeError(usize, String),
     DivisionByZero(usize, String),
     UndefinedOperation(usize, String),
+    UndefinedVariable(usize, Token),
 }
 
 impl fmt::Display for RuntimeError {
@@ -33,9 +34,12 @@ impl fmt::Display for RuntimeError {
         match self {
             RuntimeError::TypeError(line, msg) => write!(f, "line {line}: {msg}"),
             RuntimeError::DivisionByZero(line, msg) => {
-                write!(f, "line {line}: Division by zero: {msg}")
+                write!(f, "line {line}: Division by zero: {msg}.")
             }
-            RuntimeError::UndefinedOperation(line, msg) => write!(f, "line {line}: {msg}"),
+            RuntimeError::UndefinedOperation(line, msg) => write!(f, "line {line}: {msg}."),
+            RuntimeError::UndefinedVariable(line, token) => {
+                write!(f, "line {line}: Undefined variable '{}'.", token.lexeme)
+            }
         }
     }
 }
