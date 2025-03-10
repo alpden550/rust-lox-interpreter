@@ -25,19 +25,19 @@ impl Display for Expr {
 }
 
 pub trait ExprVisitor<T> {
-    fn visit_literal_expr(&self, literal: &Literal) -> Result<T, RuntimeError>;
+    fn visit_literal_expr(&mut self, literal: &Literal) -> Result<T, RuntimeError>;
     fn visit_binary_expr(
-        &self,
+        &mut self,
         left: &Expr,
         operator: &Token,
         right: &Expr,
     ) -> Result<T, RuntimeError>;
-    fn visit_grouping_expr(&self, expression: &Expr) -> Result<T, RuntimeError>;
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Result<T, RuntimeError>;
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<T, RuntimeError>;
+    fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<T, RuntimeError>;
 }
 
 impl Expr {
-    pub fn accept<T>(&self, visitor: &dyn ExprVisitor<T>) -> Result<T, RuntimeError> {
+    pub fn accept<T>(&self, visitor: &mut dyn ExprVisitor<T>) -> Result<T, RuntimeError> {
         match self {
             Expr::Literal(literal) => visitor.visit_literal_expr(literal),
             Expr::Binary(left, operator, right) => visitor.visit_binary_expr(left, operator, right),
