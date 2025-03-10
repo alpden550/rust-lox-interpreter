@@ -1,6 +1,7 @@
 use crate::errors::RuntimeError;
 use crate::models::exr::{Expr, ExprVisitor};
 use crate::models::literals::Literal;
+use crate::models::stmt::{Stmt, StmtVisitor};
 use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
 
@@ -9,12 +10,12 @@ pub struct Interpreter {
 }
 
 impl ExprVisitor<Literal> for Interpreter {
-    fn visit_literal_expr(&self, literal: &Literal) -> Result<Literal, RuntimeError> {
+    fn visit_literal_expr(&mut self, literal: &Literal) -> Result<Literal, RuntimeError> {
         Ok(literal.clone())
     }
 
     fn visit_binary_expr(
-        &self,
+        &mut self,
         left: &Expr,
         operator: &Token,
         right: &Expr,
@@ -100,11 +101,15 @@ impl ExprVisitor<Literal> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         self.evaluate(expression)
     }
 
-    fn visit_unary_expr(&self, operator: &Token, right: &Expr) -> Result<Literal, RuntimeError> {
+    fn visit_unary_expr(
+        &mut self,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
         let right = self.evaluate(right)?;
 
         match operator.token_type {
@@ -124,21 +129,33 @@ impl ExprVisitor<Literal> for Interpreter {
     }
 }
 
+impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
+    fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+        self.evaluate(expr)?;
+        Ok(())
+    }
+
+    fn visit_print_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
+        let value = self.evaluate(expr)?;
+        println!("{}", value);
+        Ok(())
+    }
+}
+
 impl Interpreter {
     pub fn new() -> Self {
         Self { errors: Vec::new() }
     }
 
-    pub fn interpret(&mut self, expr: &Expr) {
-        match self.evaluate(expr) {
-            Ok(e) => {
-                println!("{}", e);
-            }
-            Err(e) => self.errors.push(e.to_string()),
-        }
+    pub fn interpret(&mut self, stmts: &[Stmt]) {
+        stmts.iter().for_each(|stmt| self.execute(stmt));
     }
 
-    fn evaluate(&self, expression: &Expr) -> Result<Literal, RuntimeError> {
+    fn log_error(&mut self, error: RuntimeError) {
+        self.errors.push(error.to_string());
+    }
+
+    fn evaluate(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         expression.accept(self)
     }
 
@@ -148,6 +165,13 @@ impl Interpreter {
             Literal::Boolean(b) => *b,
             Literal::Number(n) => *n != 0.0,
             Literal::String(s) => !s.is_empty(),
+        }
+    }
+
+    fn execute(&mut self, stmt: &Stmt) {
+        match stmt.accept(self) {
+            Ok(_) => {}
+            Err(e) => self.log_error(e),
         }
     }
 }
