@@ -45,15 +45,6 @@ impl Lox {
         }
 
         let mut interpreter = Interpreter::new();
-        for expr in parser.exprs {
-            interpreter.interpret(&expr);
-        }
-        if !interpreter.errors.is_empty() {
-            println!("Errors:");
-            for error in interpreter.errors {
-                eprintln!("{}", error);
-            }
-            exit(ExitCode::RuntimeError as i32);
-        }
+        interpreter.interpret(&parser.stmts);
     }
 }
