@@ -25,13 +25,13 @@ impl Parser {
 
     pub fn parse(&mut self) {
         while !self.is_at_end() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(stmt) => {
                     self.stmts.push(stmt);
                 }
                 Err(error) => {
                     self.errors.push(error.to_string());
-                    // self.synchronize();
+                    self.synchronize();
                 }
             }
         }
@@ -119,6 +119,10 @@ impl Parser {
             return Ok(Expr::Literal(self.previous().literal.clone()));
         }
 
+        if self.match_any(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(self.previous().clone()));
+        }
+
         if self.match_any(&[TokenType::LeftParen]) {
             let expr = self.expression()?;
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
@@ -204,6 +208,14 @@ impl Parser {
         }
     }
 
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_any(&[TokenType::Var]) {
+            return self.var_declaration();
+        }
+
+        self.statement()
+    }
+
     fn statement(&mut self) -> Result<Stmt, ParseError> {
         if self.match_any(&[TokenType::Print]) {
             return self.print_statement();
@@ -222,5 +234,25 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Stmt::Expr(expr))
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+        self.consume(TokenType::Identifier, "Expect variable name.")?;
+        let name = self.previous().clone();
+        let mut initializer = None;
+
+        if {
+            let match_equal = self.match_any(&[TokenType::Equal]);
+            match_equal
+        } {
+            initializer = Some(self.expression()?);
+        }
+
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::Var(name.lexeme.clone(), initializer))
     }
 }
