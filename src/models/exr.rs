@@ -9,6 +9,7 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
     Grouping(Box<Expr>),
+    Variable(Token),
 }
 
 impl Display for Expr {
@@ -20,6 +21,7 @@ impl Display for Expr {
             }
             Expr::Unary(operator, right) => write!(f, "({} {})", operator.lexeme, right),
             Expr::Grouping(expression) => write!(f, "(group {})", expression),
+            Expr::Variable(token) => write!(f, "variable {}", token.lexeme),
         }
     }
 }
@@ -43,6 +45,7 @@ impl Expr {
             Expr::Binary(left, operator, right) => visitor.visit_binary_expr(left, operator, right),
             Expr::Grouping(expression) => visitor.visit_grouping_expr(expression),
             Expr::Unary(operator, right) => visitor.visit_unary_expr(operator, right),
+            Expr::Variable(token) => todo!(),
         }
     }
 }
