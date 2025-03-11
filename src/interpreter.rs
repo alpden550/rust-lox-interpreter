@@ -136,6 +136,11 @@ impl ExprVisitor<Literal> for Interpreter {
     fn visit_variable_expr(&mut self, token: &Token) -> Result<Literal, RuntimeError> {
         self.env.borrow().get(token)
     }
+
+    fn visit_assign_expr(&mut self, token: &Token, expr: &Expr) -> Result<Literal, RuntimeError> {
+        let value = self.evaluate(expr)?;
+        self.env.borrow_mut().assign(token, value)
+    }
 }
 
 impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
