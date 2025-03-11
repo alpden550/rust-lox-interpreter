@@ -10,6 +10,7 @@ pub enum Expr {
     Unary(Token, Box<Expr>),
     Grouping(Box<Expr>),
     Variable(Token),
+    Assign(Token, Box<Expr>),
 }
 
 impl Display for Expr {
@@ -22,6 +23,7 @@ impl Display for Expr {
             Expr::Unary(operator, right) => write!(f, "({} {})", operator.lexeme, right),
             Expr::Grouping(expression) => write!(f, "(group {})", expression),
             Expr::Variable(token) => write!(f, "variable {}", token.lexeme),
+            Expr::Assign(token, expr) => write!(f, "assign {} = {}", token.lexeme, expr),
         }
     }
 }
@@ -37,6 +39,7 @@ pub trait ExprVisitor<T> {
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<T, RuntimeError>;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<T, RuntimeError>;
     fn visit_variable_expr(&mut self, token: &Token) -> Result<T, RuntimeError>;
+    fn visit_assign_expr(&mut self, token: &Token, expr: &Expr) -> Result<T, RuntimeError>;
 }
 
 impl Expr {
@@ -47,6 +50,7 @@ impl Expr {
             Expr::Grouping(expression) => visitor.visit_grouping_expr(expression),
             Expr::Unary(operator, right) => visitor.visit_unary_expr(operator, right),
             Expr::Variable(token) => visitor.visit_variable_expr(token),
+            Expr::Assign(token, expr) => visitor.visit_assign_expr(token, expr),
         }
     }
 }
