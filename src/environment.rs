@@ -25,4 +25,14 @@ impl Environment {
             .cloned()
             .ok_or_else(|| RuntimeError::UndefinedVariable(token.line, token.clone()))
     }
+
+    pub fn assign(&mut self, token: &Token, value: Literal) -> Result<Literal, RuntimeError> {
+        match self.values.get_mut(&token.lexeme) {
+            Some(val) => {
+                *val = value.clone();
+                Ok(value)
+            }
+            None => Err(RuntimeError::UndefinedVariable(token.line, token.clone())),
+        }
+    }
 }
