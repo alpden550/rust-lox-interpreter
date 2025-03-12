@@ -1,17 +1,28 @@
 use crate::errors::RuntimeError;
 use crate::models::literals::Literal;
 use crate::models::tokens::Token;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Environment {
     values: HashMap<String, Literal>,
+    enclosing: Option<Rc<RefCell<Environment>>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
+            enclosing: None,
+        }
+    }
+
+    pub fn new_with_enclosing(enclosing: &Rc<RefCell<Environment>>) -> Self {
+        Self {
+            values: HashMap::new(),
+            enclosing: Some(Rc::clone(enclosing)),
         }
     }
 
@@ -20,19 +31,27 @@ impl Environment {
     }
 
     pub fn get(&self, token: &Token) -> Result<Literal, RuntimeError> {
-        self.values
-            .get(&token.lexeme)
-            .cloned()
-            .ok_or_else(|| RuntimeError::UndefinedVariable(token.line, token.clone()))
+        if let Some(value) = self.values.get(&token.lexeme) {
+            return Ok(value.clone());
+        }
+
+        if let Some(enclosing) = &self.enclosing {
+            return enclosing.borrow().get(token);
+        }
+
+        Err(RuntimeError::UndefinedVariable(token.line, token.clone()))
     }
 
     pub fn assign(&mut self, token: &Token, value: Literal) -> Result<Literal, RuntimeError> {
-        match self.values.get_mut(&token.lexeme) {
-            Some(val) => {
-                *val = value.clone();
-                Ok(value)
-            }
-            None => Err(RuntimeError::UndefinedVariable(token.line, token.clone())),
+        if self.values.contains_key(&token.lexeme) {
+            self.values.insert(token.lexeme.clone(), value.clone());
+            return Ok(value);
         }
+
+        if let Some(enclosing) = &self.enclosing {
+            return enclosing.borrow_mut().assign(token, value);
+        }
+
+        Err(RuntimeError::UndefinedVariable(token.line, token.clone()))
     }
 }
