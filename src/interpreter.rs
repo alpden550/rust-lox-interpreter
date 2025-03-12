@@ -167,6 +167,11 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
         self.env.borrow_mut().define(lexeme, value);
         Ok(())
     }
+
+    fn visit_block_stmt(&mut self, stmts: &Vec<Stmt>) -> Result<(), RuntimeError> {
+        let new_env = Rc::new(RefCell::new(Environment::new_with_enclosing(&self.env)));
+        self.execute_block(stmts, new_env)
+    }
 }
 
 impl Interpreter {
@@ -203,5 +208,27 @@ impl Interpreter {
             Ok(_) => {}
             Err(e) => self.log_error(e),
         }
+    }
+
+    fn execute_block(
+        &mut self,
+        stmts: &Vec<Stmt>,
+        env: Rc<RefCell<Environment>>,
+    ) -> Result<(), RuntimeError> {
+        let previous = self.env.clone();
+        self.env = env;
+
+        for stmt in stmts {
+            match stmt.accept(self) {
+                Ok(_) => {}
+                Err(e) => {
+                    self.env = previous;
+                    return Err(e);
+                }
+            }
+        }
+
+        self.env = previous;
+        Ok(())
     }
 }
