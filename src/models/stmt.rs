@@ -6,6 +6,7 @@ pub enum Stmt {
     Expr(Expr),
     Print(Expr),
     Var(String, Option<Expr>),
+    Block(Vec<Stmt>),
 }
 
 impl Display for Stmt {
@@ -19,6 +20,9 @@ impl Display for Stmt {
                 } else {
                     write!(f, "var {}", token)
                 }
+            },
+            Stmt::Block(stmts) => {
+                write!(f, "block {:?}", stmts)
             }
         }
     }
@@ -28,6 +32,7 @@ pub trait StmtVisitor<T> {
     fn visit_expr_stmt(&mut self, expr: &Expr) -> T;
     fn visit_print_stmt(&mut self, expr: &Expr) -> T;
     fn visit_var_stmt(&mut self, lexeme: String, expr: &Option<Expr>) -> T;
+    fn visit_block_stmt(&mut self, stmts: &Vec<Stmt>) -> T;
 }
 
 impl Stmt {
@@ -36,6 +41,7 @@ impl Stmt {
             Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
             Stmt::Print(expr) => visitor.visit_print_stmt(expr),
             Stmt::Var(lexeme, expr) => visitor.visit_var_stmt(lexeme.clone(), expr),
+            Stmt::Block(stmts) => visitor.visit_block_stmt(stmts),
         }
     }
 }
