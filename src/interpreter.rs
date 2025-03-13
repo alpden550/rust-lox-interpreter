@@ -149,6 +149,24 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
         Ok(())
     }
 
+    fn visit_if_stmt(
+        &mut self,
+        cond: &Expr,
+        then_branch: &Stmt,
+        else_branch: &Option<Box<Stmt>>,
+    ) -> Result<(), RuntimeError> {
+        let condition = self.evaluate(cond)?;
+
+        if self.is_truthy(&condition) {
+            self.execute(then_branch)
+        } else {
+            match else_branch {
+                Some(stmt) => self.execute(stmt),
+                None => Ok(()),
+            }
+        }
+    }
+
     fn visit_print_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
         let value = self.evaluate(expr)?;
         println!("{}", value);
@@ -183,7 +201,12 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self, stmts: &[Stmt]) {
-        stmts.iter().for_each(|stmt| self.execute(stmt));
+        for stmt in stmts {
+            match self.execute(stmt) {
+                Ok(_) => {}
+                Err(e) => self.log_error(e),
+            }
+        }
     }
 
     fn log_error(&mut self, error: RuntimeError) {
@@ -203,11 +226,8 @@ impl Interpreter {
         }
     }
 
-    fn execute(&mut self, stmt: &Stmt) {
-        match stmt.accept(self) {
-            Ok(_) => {}
-            Err(e) => self.log_error(e),
-        }
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
+        stmt.accept(self)
     }
 
     fn execute_block(
