@@ -35,11 +35,10 @@ impl Environment {
             return Ok(value.clone());
         }
 
-        if let Some(enclosing) = &self.enclosing {
-            return enclosing.borrow().get(token);
+        match self.enclosing.as_ref() {
+            Some(enclosing) => enclosing.borrow().get(token),
+            None => Err(RuntimeError::UndefinedVariable(token.line, token.clone())),
         }
-
-        Err(RuntimeError::UndefinedVariable(token.line, token.clone()))
     }
 
     pub fn assign(&mut self, token: &Token, value: Literal) -> Result<Literal, RuntimeError> {
