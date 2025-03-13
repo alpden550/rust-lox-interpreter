@@ -239,7 +239,7 @@ impl Parser {
         if self.match_any(&[TokenType::Print]) {
             return self.print_statement();
         }
-        
+
         if self.match_any(&[TokenType::LeftBrace]) {
             return self.block_statement();
         }
@@ -252,7 +252,7 @@ impl Parser {
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Stmt::Print(value))
     }
-    
+
     fn block_statement(&mut self) -> Result<Stmt, ParseError> {
         let mut statements = Vec::new();
 
