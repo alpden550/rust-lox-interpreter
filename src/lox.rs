@@ -46,5 +46,12 @@ impl Lox {
 
         let mut interpreter = Interpreter::new();
         interpreter.interpret(&parser.stmts);
+        if !interpreter.errors.is_empty() {
+            println!("Runtime errors:");
+            for error in interpreter.errors {
+                eprintln!("{}", error);
+            }
+            exit(ExitCode::RuntimeError as i32);
+        }
     }
 }
