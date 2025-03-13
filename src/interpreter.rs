@@ -212,23 +212,24 @@ impl Interpreter {
 
     fn execute_block(
         &mut self,
-        stmts: &Vec<Stmt>,
+        stmts: &[Stmt],
         env: Rc<RefCell<Environment>>,
     ) -> Result<(), RuntimeError> {
         let previous = self.env.clone();
         self.env = env;
 
-        for stmt in stmts {
-            match stmt.accept(self) {
-                Ok(_) => {}
-                Err(e) => {
-                    self.env = previous;
-                    return Err(e);
-                }
+        let result: Result<(), RuntimeError> = (|| {
+            for stmt in stmts {
+                stmt.accept(self)?;
             }
-        }
+            Ok(())
+        })();
 
         self.env = previous;
-        Ok(())
+
+        if let Err(ref e) = result {
+            self.log_error(e.clone());
+        }
+        result
     }
 }
