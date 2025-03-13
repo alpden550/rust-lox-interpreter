@@ -22,6 +22,7 @@ impl fmt::Display for ParseError {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum RuntimeError {
     TypeError(usize, String),
     DivisionByZero(usize, String),
