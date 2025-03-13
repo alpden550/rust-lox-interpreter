@@ -20,7 +20,7 @@ impl Display for Stmt {
                 } else {
                     write!(f, "var {}", token)
                 }
-            },
+            }
             Stmt::Block(stmts) => {
                 write!(f, "block {:?}", stmts)
             }
