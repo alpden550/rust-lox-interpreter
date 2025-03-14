@@ -19,6 +19,25 @@ impl ExprVisitor<Literal> for Interpreter {
         Ok(literal.clone())
     }
 
+    fn visit_logical_expr(
+        &mut self,
+        left: &Expr,
+        operator: &Token,
+        right: &Expr,
+    ) -> Result<Literal, RuntimeError> {
+        let left_value = self.evaluate(left)?;
+
+        match operator.token_type {
+            TokenType::Or if self.is_truthy(&left_value) => Ok(left_value),
+            TokenType::And if !self.is_truthy(&left_value) => Ok(left_value),
+            TokenType::Or | TokenType::And => self.evaluate(right),
+            _ => Err(RuntimeError::UndefinedOperation(
+                operator.line,
+                format!("Unknown logical operator: {}", operator.token_type),
+            )),
+        }
+    }
+
     fn visit_binary_expr(
         &mut self,
         left: &Expr,
