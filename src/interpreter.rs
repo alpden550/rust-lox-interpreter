@@ -192,6 +192,17 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
         Ok(())
     }
 
+    fn visit_while_stmt(&mut self, cond: &Expr, body: &Stmt) -> Result<(), RuntimeError> {
+        loop {
+            let condition = self.evaluate(cond)?;
+            if !self.is_truthy(&condition) {
+                break;
+            }
+            self.execute(body)?;
+        }
+        Ok(())
+    }
+
     fn visit_var_stmt(
         &mut self,
         lexeme: String,
