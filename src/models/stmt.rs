@@ -6,6 +6,7 @@ pub enum Stmt {
     Expr(Expr),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
+    While(Expr, Box<Stmt>),
     Var(String, Option<Expr>),
     Block(Vec<Stmt>),
 }
@@ -16,6 +17,7 @@ impl Display for Stmt {
             Stmt::Expr(e) => write!(f, "expr {}", e),
             Stmt::If(c, t, e) => write!(f, "if {} then {} else {:?}", c, t, e),
             Stmt::Print(e) => write!(f, "print {}", e),
+            Stmt::While(condition, body) => write!(f, "while loop {} do {}", condition, body),
             Stmt::Var(token, expr) => {
                 if let Some(expr) = expr {
                     write!(f, "var {} = {}", token, expr)
@@ -39,6 +41,7 @@ pub trait StmtVisitor<T> {
         else_branch: &Option<Box<Stmt>>,
     ) -> T;
     fn visit_print_stmt(&mut self, expr: &Expr) -> T;
+    fn visit_while_stmt(&mut self, cond: &Expr, body: &Stmt) -> T;
     fn visit_var_stmt(&mut self, lexeme: String, expr: &Option<Expr>) -> T;
     fn visit_block_stmt(&mut self, stmts: &Vec<Stmt>) -> T;
 }
@@ -49,6 +52,7 @@ impl Stmt {
             Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
             Stmt::If(cond, then_b, else_b) => visitor.visit_if_stmt(cond, then_b, else_b),
             Stmt::Print(expr) => visitor.visit_print_stmt(expr),
+            Stmt::While(cond, body) => visitor.visit_while_stmt(cond, body),
             Stmt::Var(lexeme, expr) => visitor.visit_var_stmt(lexeme.clone(), expr),
             Stmt::Block(stmts) => visitor.visit_block_stmt(stmts),
         }
