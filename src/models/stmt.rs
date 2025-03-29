@@ -1,9 +1,11 @@
 use crate::models::exr::Expr;
+use crate::models::tokens::Token;
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Expr(Expr),
+    Function(Token, Vec<Token>, Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
     While(Expr, Box<Stmt>),
@@ -15,6 +17,9 @@ impl Display for Stmt {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             Stmt::Expr(e) => write!(f, "expr {}", e),
+            Stmt::Function(token, params, body) => {
+                write!(f, "function {}({:?}, {:?})", token, params, body)
+            }
             Stmt::If(c, t, e) => write!(f, "if {} then {} else {:?}", c, t, e),
             Stmt::Print(e) => write!(f, "print {}", e),
             Stmt::While(condition, body) => write!(f, "while loop {} do {}", condition, body),
@@ -34,6 +39,7 @@ impl Display for Stmt {
 
 pub trait StmtVisitor<T> {
     fn visit_expr_stmt(&mut self, expr: &Expr) -> T;
+    fn visit_function_stmt(&mut self, name: &Token, params: &Vec<Token>, body: &Vec<Stmt>) -> T;
     fn visit_if_stmt(
         &mut self,
         cond: &Expr,
@@ -50,6 +56,7 @@ impl Stmt {
     pub fn accept<T>(&self, visitor: &mut dyn StmtVisitor<T>) -> T {
         match self {
             Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
+            Stmt::Function(name, params, body) => visitor.visit_function_stmt(name, params, body),
             Stmt::If(cond, then_b, else_b) => visitor.visit_if_stmt(cond, then_b, else_b),
             Stmt::Print(expr) => visitor.visit_print_stmt(expr),
             Stmt::While(cond, body) => visitor.visit_while_stmt(cond, body),
