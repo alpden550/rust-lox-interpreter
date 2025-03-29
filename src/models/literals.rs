@@ -1,3 +1,4 @@
+use crate::models::funcs::Function;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,6 +7,7 @@ pub enum Literal {
     String(String),
     Number(f64),
     Boolean(bool),
+    Callable(Function),
 }
 
 impl Display for Literal {
@@ -15,6 +17,7 @@ impl Display for Literal {
             Literal::String(s) => write!(f, "{}", s),
             Literal::Number(n) => write!(f, "{}", n),
             Literal::Boolean(b) => write!(f, "{}", b),
+            Literal::Callable(func) => write!(f, "{}", func),
         }
     }
 }
