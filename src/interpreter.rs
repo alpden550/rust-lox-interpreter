@@ -1,16 +1,18 @@
 use crate::environment::Environment;
 use crate::errors::RuntimeError;
 use crate::models::exr::{Expr, ExprVisitor};
+use crate::models::funcs::Function;
 use crate::models::literals::Literal;
 use crate::models::stmt::{Stmt, StmtVisitor};
 use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
-
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
     pub errors: Vec<String>,
+    pub(crate) globals: Rc<RefCell<Environment>>,
     env: Rc<RefCell<Environment>>,
 }
 
@@ -125,6 +127,35 @@ impl ExprVisitor<Literal> for Interpreter {
         }
     }
 
+    fn visit_call_expr(
+        &mut self,
+        callee: &Expr,
+        paren: &Token,
+        arguments: &Vec<Expr>,
+    ) -> Result<Literal, RuntimeError> {
+        let callee = self.evaluate(callee)?;
+        let args: Vec<Literal> = arguments
+            .iter()
+            .map(|arg| self.evaluate(arg))
+            .collect::<Result<_, _>>()?;
+
+        match callee {
+            Literal::Callable(func) => {
+                if args.len() != func.arity() {
+                    return Err(RuntimeError::TypeError(
+                        paren.line,
+                        format!("Expected {} arguments but got {}", func.arity(), args.len()),
+                    ));
+                }
+                func.call(self, args)
+            }
+            _ => Err(RuntimeError::TypeError(
+                paren.line,
+                format!("Can only call functions and classes. Got: {}", callee),
+            )),
+        }
+    }
+
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<Literal, RuntimeError> {
         self.evaluate(expression)
     }
@@ -165,6 +196,22 @@ impl ExprVisitor<Literal> for Interpreter {
 impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
     fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<(), RuntimeError> {
         self.evaluate(expr)?;
+        Ok(())
+    }
+
+    fn visit_function_stmt(
+        &mut self,
+        name: &Token,
+        params: &Vec<Token>,
+        body: &Vec<Stmt>,
+    ) -> Result<(), RuntimeError> {
+        let function = Literal::Callable(Function::Lox {
+            name: name.lexeme.clone(),
+            params: params.clone(),
+            body: body.clone(),
+        });
+        self.env.borrow_mut().define(name.lexeme.clone(), function);
+
         Ok(())
     }
 
@@ -224,9 +271,26 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
+        let globals = Rc::new(RefCell::new(Environment::new()));
+
+        let clock = Literal::Callable(Function::Native {
+            name: "clock".to_string(),
+            arity: 0,
+            body: |_args| {
+                let seconds = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64();
+                Ok(Literal::Number(seconds))
+            },
+        });
+
+        globals.borrow_mut().define("clock".to_string(), clock);
+
         Self {
             errors: Vec::new(),
-            env: Rc::new(RefCell::new(Environment::new())),
+            globals: Rc::clone(&globals),
+            env: Rc::clone(&globals),
         }
     }
 
@@ -253,6 +317,7 @@ impl Interpreter {
             Literal::Boolean(b) => *b,
             Literal::Number(n) => *n != 0.0,
             Literal::String(s) => !s.is_empty(),
+            _ => false,
         }
     }
 
@@ -260,7 +325,7 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    fn execute_block(
+    pub fn execute_block(
         &mut self,
         stmts: &[Stmt],
         env: Rc<RefCell<Environment>>,
