@@ -3,11 +3,12 @@ use crate::models::literals::Literal;
 use crate::models::tokens::Token;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Literal(Literal),
     Logical(Box<Expr>, Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
+    Call(Box<Expr>, Token, Vec<Expr>),
     Unary(Token, Box<Expr>),
     Grouping(Box<Expr>),
     Variable(Token),
@@ -23,6 +24,9 @@ impl Display for Expr {
             }
             Expr::Binary(left, operator, right) => {
                 write!(f, "({} {} {})", left, operator.lexeme, right)
+            }
+            Expr::Call(callee, _paren, arguments) => {
+                write!(f, "func {}({:?})", callee, arguments)
             }
             Expr::Unary(operator, right) => write!(f, "({} {})", operator.lexeme, right),
             Expr::Grouping(expression) => write!(f, "(group {})", expression),
@@ -46,6 +50,12 @@ pub trait ExprVisitor<T> {
         operator: &Token,
         right: &Expr,
     ) -> Result<T, RuntimeError>;
+    fn visit_call_expr(
+        &mut self,
+        callee: &Expr,
+        paren: &Token,
+        arguments: &Vec<Expr>,
+    ) -> Result<T, RuntimeError>;
     fn visit_grouping_expr(&mut self, expression: &Expr) -> Result<T, RuntimeError>;
     fn visit_unary_expr(&mut self, operator: &Token, right: &Expr) -> Result<T, RuntimeError>;
     fn visit_variable_expr(&mut self, token: &Token) -> Result<T, RuntimeError>;
@@ -60,6 +70,9 @@ impl Expr {
                 visitor.visit_logical_expr(left, operator, right)
             }
             Expr::Binary(left, operator, right) => visitor.visit_binary_expr(left, operator, right),
+            Expr::Call(callee, paren, arguments) => {
+                visitor.visit_call_expr(callee, paren, arguments)
+            }
             Expr::Grouping(expression) => visitor.visit_grouping_expr(expression),
             Expr::Unary(operator, right) => visitor.visit_unary_expr(operator, right),
             Expr::Variable(token) => visitor.visit_variable_expr(token),
