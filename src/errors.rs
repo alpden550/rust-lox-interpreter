@@ -1,3 +1,4 @@
+use crate::models::literals::Literal;
 use crate::models::token_type::TokenType;
 use crate::models::tokens::Token;
 use std::fmt;
@@ -28,6 +29,7 @@ pub enum RuntimeError {
     DivisionByZero(usize, String),
     UndefinedOperation(usize, String),
     UndefinedVariable(usize, Token),
+    Return(usize, Literal),
 }
 
 impl fmt::Display for RuntimeError {
@@ -41,6 +43,7 @@ impl fmt::Display for RuntimeError {
             RuntimeError::UndefinedVariable(line, token) => {
                 write!(f, "line {line}: Undefined variable '{}'.", token.lexeme)
             }
+            RuntimeError::Return(line, value) => write!(f, "line {line}: Return: {value}"),
         }
     }
 }
