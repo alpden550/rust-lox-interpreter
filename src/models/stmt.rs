@@ -9,6 +9,7 @@ pub enum Stmt {
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
     While(Expr, Box<Stmt>),
+    Return(Token, Option<Expr>),
     Var(String, Option<Expr>),
     Block(Vec<Stmt>),
 }
@@ -30,6 +31,9 @@ impl Display for Stmt {
                     write!(f, "var {}", token)
                 }
             }
+            Stmt::Return(_token, expr) => {
+                write!(f, "return {:?}", expr)
+            }
             Stmt::Block(stmts) => {
                 write!(f, "block {:?}", stmts)
             }
@@ -48,6 +52,7 @@ pub trait StmtVisitor<T> {
     ) -> T;
     fn visit_print_stmt(&mut self, expr: &Expr) -> T;
     fn visit_while_stmt(&mut self, cond: &Expr, body: &Stmt) -> T;
+    fn visit_return_stmt(&mut self, token: &Token, expr: &Option<Expr>) -> T;
     fn visit_var_stmt(&mut self, lexeme: String, expr: &Option<Expr>) -> T;
     fn visit_block_stmt(&mut self, stmts: &Vec<Stmt>) -> T;
 }
@@ -60,6 +65,7 @@ impl Stmt {
             Stmt::If(cond, then_b, else_b) => visitor.visit_if_stmt(cond, then_b, else_b),
             Stmt::Print(expr) => visitor.visit_print_stmt(expr),
             Stmt::While(cond, body) => visitor.visit_while_stmt(cond, body),
+            Stmt::Return(token, expr) => visitor.visit_return_stmt(token, expr),
             Stmt::Var(lexeme, expr) => visitor.visit_var_stmt(lexeme.clone(), expr),
             Stmt::Block(stmts) => visitor.visit_block_stmt(stmts),
         }
