@@ -70,11 +70,14 @@ impl Function {
             env.borrow_mut().define(param.lexeme.clone(), arg.clone());
         });
 
-        interpreter.execute_block(body, env).map_err(|e| {
-            RuntimeError::UndefinedOperation(0, format!("Error in function call: {}", e))
-        })?;
-
-        Ok(Literal::Nil)
+        match interpreter.execute_block(body, env) {
+            Err(RuntimeError::Return(_, value)) => Ok(value),
+            Err(e) => Err(RuntimeError::UndefinedOperation(
+                0,
+                format!("Error in function call: {}", e),
+            )),
+            Ok(..) => Ok(Literal::Nil),
+        }
     }
 
     pub fn to_string(&self) -> String {
