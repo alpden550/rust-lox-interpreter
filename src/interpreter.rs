@@ -10,6 +10,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[allow(dead_code)]
 pub struct Interpreter {
     pub errors: Vec<String>,
     pub globals: Rc<RefCell<Environment>>,
@@ -215,6 +216,7 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
             name: name.lexeme.clone(),
             params: params.clone(),
             body: body.clone(),
+            closure: Rc::clone(&self.env),
         });
         self.env.borrow_mut().define(name.lexeme.clone(), function);
 
