@@ -5,7 +5,7 @@ use crate::models::literals::Literal;
 use crate::models::stmt::Stmt;
 use crate::models::tokens::Token;
 use std::cell::RefCell;
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 use std::rc::Rc;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -19,13 +19,16 @@ pub enum Function {
         name: String,
         params: Vec<Token>,
         body: Vec<Stmt>,
-        // closure: Rc<RefCell<Environment>>
+        closure: Rc<RefCell<Environment>>,
     },
 }
 
 impl Display for Function {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "function {}", self.to_string())
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Function::Native { name, .. } => write!(f, "<native fn {}>", name),
+            Function::Lox { name, .. } => write!(f, "<lox fn {}>", name),
+        }
     }
 }
 
@@ -44,46 +47,34 @@ impl Function {
     ) -> Result<Literal, RuntimeError> {
         match self {
             Function::Native { body, .. } => body(args),
-            Function::Lox { params, body, .. } => self.call_lox(interpreter, params, body, args),
-        }
-    }
+            Function::Lox {
+                params,
+                body,
+                closure,
+                ..
+            } => {
+                if args.len() != params.len() {
+                    return Err(RuntimeError::TypeError(
+                        0,
+                        format!("Expected {} args, got {}", params.len(), args.len()),
+                    ));
+                }
 
-    fn call_lox(
-        &self,
-        interpreter: &mut Interpreter,
-        params: &[Token],
-        body: &[Stmt],
-        args: Vec<Literal>,
-    ) -> Result<Literal, RuntimeError> {
-        if args.len() != params.len() {
-            return Err(RuntimeError::TypeError(
-                0,
-                format!("Expected {} args, got {}", params.len(), args.len()),
-            ));
-        }
+                let env = Rc::new(RefCell::new(Environment::new_with_enclosing(closure)));
 
-        let env = Rc::new(RefCell::new(Environment::new_with_enclosing(
-            &interpreter.globals,
-        )));
+                {
+                    let mut env_borrow = env.borrow_mut();
+                    for (param, arg) in params.iter().zip(args) {
+                        env_borrow.define(param.lexeme.clone(), arg);
+                    }
+                }
 
-        params.iter().zip(args.iter()).for_each(|(param, arg)| {
-            env.borrow_mut().define(param.lexeme.clone(), arg.clone());
-        });
-
-        match interpreter.execute_block(body, env) {
-            Err(RuntimeError::Return(_, value)) => Ok(value),
-            Err(e) => Err(RuntimeError::UndefinedOperation(
-                0,
-                format!("Error in function call: {}", e),
-            )),
-            Ok(..) => Ok(Literal::Nil),
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            Function::Native { name, .. } => format!("<native fn {}>", name),
-            Function::Lox { name, .. } => format!("<lox fn {}>", name),
+                match interpreter.execute_block(body, env) {
+                    Ok(()) => Ok(Literal::Nil),
+                    Err(RuntimeError::Return(_, value)) => Ok(value),
+                    Err(e) => Err(e),
+                }
+            }
         }
     }
 }
