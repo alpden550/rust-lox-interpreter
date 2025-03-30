@@ -2,7 +2,6 @@ use crate::models::literals::Literal;
 use crate::models::token_type::TokenType;
 use std::fmt::Display;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
@@ -21,7 +20,6 @@ impl Display for Token {
     }
 }
 
-#[allow(dead_code)]
 impl Token {
     pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: usize) -> Self {
         Self {

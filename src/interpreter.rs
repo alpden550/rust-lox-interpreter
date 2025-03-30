@@ -12,7 +12,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
     pub errors: Vec<String>,
-    pub(crate) globals: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
     env: Rc<RefCell<Environment>>,
 }
 
