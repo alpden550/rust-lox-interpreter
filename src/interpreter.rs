@@ -85,9 +85,15 @@ impl ExprVisitor<Literal> for Interpreter {
                 (Literal::String(l), Literal::String(r)) => {
                     Ok(Literal::String(format!("{}{}", l, r)))
                 }
+                (Literal::String(l), Literal::Number(r)) => {
+                    Ok(Literal::String(format!("{}{}", l, r)))
+                }
+                (Literal::Number(l), Literal::String(r)) => {
+                    Ok(Literal::String(format!("{}{}", l, r)))
+                }
                 _ => Err(RuntimeError::TypeError(
                     operator.line,
-                    format!("Operands must be numbers or strings, got {left} and {right}",),
+                    format!("Operands must be numbers or strings, got {left} and {right}"),
                 )),
             },
             TokenType::Greater => match (&left, &right) {
@@ -250,6 +256,18 @@ impl StmtVisitor<Result<(), RuntimeError>> for Interpreter {
         Ok(())
     }
 
+    fn visit_return_stmt(
+        &mut self,
+        token: &Token,
+        expr: &Option<Expr>,
+    ) -> Result<(), RuntimeError> {
+        let value = expr
+            .as_ref()
+            .map_or_else(|| Ok(Literal::Nil), |expr| self.evaluate(expr))?;
+
+        Err(RuntimeError::Return(token.line, value))
+    }
+
     fn visit_var_stmt(
         &mut self,
         lexeme: String,
@@ -298,6 +316,7 @@ impl Interpreter {
         for stmt in stmts {
             match self.execute(stmt) {
                 Ok(_) => {}
+                Err(RuntimeError::Return(..)) => {}
                 Err(e) => self.log_error(e),
             }
         }
@@ -342,9 +361,6 @@ impl Interpreter {
 
         self.env = previous;
 
-        if let Err(ref e) = result {
-            self.log_error(e.clone());
-        }
         result
     }
 }
